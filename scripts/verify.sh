@@ -9,8 +9,9 @@ vault_require_command git
 vault_require_command sops
 [ -f recipients.yaml ] || vault_fail "missing recipients.yaml"
 [ -f .sops.yaml.example ] || vault_fail "missing .sops.yaml.example"
-[ -L CLAUDE.md ] && [ "$(readlink CLAUDE.md)" = AGENTS.md ] \
-  || vault_fail "CLAUDE.md must link to AGENTS.md"
+if [ ! -L CLAUDE.md ] || [ "$(readlink CLAUDE.md)" != AGENTS.md ]; then
+  vault_fail "CLAUDE.md must link to AGENTS.md"
+fi
 
 registered_recipients="$(grep -Eo 'age1[0-9a-z]+' recipients.yaml | sort -u || true)"
 recipient_count="$(printf '%s\n' "$registered_recipients" | sed '/^$/d' | wc -l | tr -d ' ')"
