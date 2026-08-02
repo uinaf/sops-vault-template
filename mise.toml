@@ -1,0 +1,19 @@
+[tasks.secret-edit]
+description = "Edit an existing SOPS payload"
+run = './scripts/secret-edit.sh'
+
+[tasks.secret-new]
+description = "Create a SOPS payload"
+run = './scripts/secret-new.sh'
+
+[tasks.test]
+description = "Exercise initialized-vault command behavior"
+run = './tests/commands.sh'
+
+[tasks.verify]
+description = "Verify scripts, template state, and command behavior"
+run = '''
+shellcheck scripts/*.sh tests/*.sh
+./scripts/verify.sh
+./tests/commands.sh
+'''

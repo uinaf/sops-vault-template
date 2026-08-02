@@ -1,0 +1,5 @@
+creation_rules:
+  - path_regex: ^secrets/.*\.sops\.(yaml|json|env)$
+    age: >-
+      AGE_RECOVERY_RECIPIENT,
+      AGE_DEPLOYMENT_RECIPIENT
