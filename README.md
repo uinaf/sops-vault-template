@@ -68,6 +68,9 @@ recipients, consumption, rotation, and recovery.
   initialized vault and rejects partial configuration.
 - `scripts/validate-secret.sh` provides the decrypting baseline and invokes an
   optional repository-owned semantic policy.
+- `.github/workflows/verify.yml` exercises the complete initialized-vault
+  create, edit, audit, and negative-validation flow on every push and pull
+  request without access to real secrets.
 - `CLAUDE.md` points to the canonical `AGENTS.md` guidance.
 
 ## License
