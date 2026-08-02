@@ -1,4 +1,4 @@
-# SOPS Vault Template
+# uinaf/sops-vault-template
 
 A small GitHub template for capability-scoped SOPS and age secret repositories.
 Generated vaults own their copied policy, scripts, and documentation; this repo
