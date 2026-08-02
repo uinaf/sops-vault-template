@@ -6,6 +6,10 @@ run = './scripts/secret-edit.sh'
 description = "Create a SOPS payload"
 run = './scripts/secret-new.sh'
 
+[tasks.secret-audit]
+description = "Decrypt and validate every secret payload"
+run = './scripts/validate-secret.sh $(find secrets -type f -name "*.sops.*" | sort)'
+
 [tasks.test]
 description = "Exercise initialized-vault command behavior"
 run = './tests/commands.sh'
@@ -15,5 +19,6 @@ description = "Verify scripts, template state, and command behavior"
 run = '''
 shellcheck scripts/*.sh tests/*.sh
 ./scripts/verify.sh
+./tests/validation.sh
 ./tests/commands.sh
 '''

@@ -51,5 +51,6 @@ status="$(sops filestatus "$target" 2>/dev/null)" \
 printf '%s\n' "$status" | grep -Eq '"encrypted"[[:space:]]*:[[:space:]]*true' \
   || vault_fail "new payload is not encrypted: $target"
 
+./scripts/validate-secret.sh "$target"
 ./scripts/verify.sh
 printf 'ok created %s\n' "$target"

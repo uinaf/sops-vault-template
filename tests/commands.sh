@@ -9,7 +9,7 @@ fail() {
   exit 1
 }
 
-for command_name in age-keygen git mise sops; do
+for command_name in age-keygen git jq mise sops; do
   command -v "$command_name" >/dev/null 2>&1 \
     || fail "missing required command: $command_name"
 done
@@ -78,6 +78,25 @@ if ./scripts/secret-edit.sh integrations/missing >/dev/null 2>&1; then
   fail "secret-edit accepted a missing payload"
 fi
 
+wrapped_output="$test_root/wrapped-output.txt"
+if SOPS_AGE_KEY_FILE="$combined_keys" \
+  SOPS_VAULT_TEST_VALUE="'wrapped'" \
+  EDITOR="$repo_root/tests/fixture-json-editor.sh" \
+    ./scripts/secret-new.sh --format json integrations/quoted >"$wrapped_output" 2>&1; then
+  fail "secret-new accepted a literal quote-wrapped value"
+fi
+grep -Fq 'literal quote-wrapped value' "$wrapped_output" \
+  || fail "secret-new did not explain quote-wrapped rejection"
+wrapped_verify_output="$test_root/wrapped-verify-output.txt"
+if SOPS_AGE_KEY_FILE="$combined_keys" \
+  ./scripts/verify.sh >"$wrapped_verify_output" 2>&1; then
+  fail "verify accepted a directly written quote-wrapped payload"
+fi
+grep -Fq 'literal quote-wrapped value' "$wrapped_verify_output" \
+  || fail "verify did not explain quote-wrapped rejection"
+rm "$wrapped_output" "$wrapped_verify_output" \
+  secrets/integrations/quoted.sops.json
+
 SOPS_AGE_KEY_FILE="$combined_keys" \
 SOPS_VAULT_TEST_VALUE=updated \
 EDITOR="$repo_root/tests/fixture-editor.sh" \
@@ -86,6 +105,7 @@ EDITOR="$repo_root/tests/fixture-editor.sh" \
 SOPS_AGE_KEY_FILE="$combined_keys" sops decrypt --output-type dotenv "$payload" \
   | grep -Fxq 'EXAMPLE_TOKEN=updated' \
   || fail "secret-edit did not update payload"
+SOPS_AGE_KEY_FILE="$combined_keys" mise run secret-audit >/dev/null
 
 printf 'EXAMPLE_TOKEN=plaintext\n' > secrets/integrations/plain.env
 if ./scripts/verify.sh >/dev/null 2>&1; then
@@ -93,5 +113,5 @@ if ./scripts/verify.sh >/dev/null 2>&1; then
 fi
 rm secrets/integrations/plain.env
 
-./scripts/verify.sh >/dev/null
-printf 'ok secret path validation, create, edit, encryption, and plaintext rejection\n'
+SOPS_AGE_KEY_FILE="$combined_keys" ./scripts/verify.sh >/dev/null
+printf 'ok secret path validation, semantic rejection, create, edit, encryption, and plaintext rejection\n'

@@ -26,5 +26,6 @@ git ls-files --error-unmatch "${matches[0]}" >/dev/null 2>&1 \
   || vault_fail "secret payload is not tracked: ${matches[0]}"
 
 sops "${matches[0]}"
+./scripts/validate-secret.sh "${matches[0]}"
 ./scripts/verify.sh
 printf 'ok updated %s\n' "${matches[0]}"

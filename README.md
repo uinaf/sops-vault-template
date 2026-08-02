@@ -8,7 +8,7 @@ is not a package or runtime dependency.
 
 Create a repository from [this template](https://github.com/new?template_name=sops-vault-template&template_owner=uinaf), then clone it.
 
-Install `mise`, `sops`, `age`, and `shellcheck`. Configure the vault before
+Install `mise`, `sops`, `age`, `jq`, and `shellcheck`. Configure the vault before
 adding secrets:
 
 1. Add the public recovery and deployment recipients to `recipients.yaml`.
@@ -41,6 +41,19 @@ mise run secret-edit -- integrations/example
 mise run verify
 ```
 
+`secret-new` and `secret-edit` decrypt the changed payload in memory and reject
+empty, non-string, or literal quote-wrapped values. Audit every payload that the
+active age identity can decrypt with:
+
+```bash
+mise run secret-audit
+```
+
+Generated vaults can add an executable `scripts/validate-secret-policy.sh`
+hook for exact key inventories and provider-specific formats. The validator
+passes decrypted JSON through standard input and the ciphertext path as its
+only argument; it must never print values.
+
 Commands accept logical paths below `secrets/`; they never accept secret values
 as arguments. [Vault operations](./docs/operations.md) covers payloads,
 recipients, consumption, rotation, and recovery.
@@ -53,6 +66,8 @@ recipients, consumption, rotation, and recovery.
   ciphertext.
 - `scripts/verify.sh` accepts the untouched template state or a completely
   initialized vault and rejects partial configuration.
+- `scripts/validate-secret.sh` provides the decrypting baseline and invokes an
+  optional repository-owned semantic policy.
 - `CLAUDE.md` points to the canonical `AGENTS.md` guidance.
 
 ## License

@@ -61,6 +61,25 @@ if git grep -I -E "$age_key_pattern|$pem_key_pattern" -- . >/dev/null; then
   vault_fail "tracked private-key contents"
 fi
 
+changed_secret_files=()
+while IFS= read -r changed_file; do
+  [ -n "$changed_file" ] || continue
+  case "$changed_file" in
+    secrets/*.sops.env|secrets/*.sops.json|secrets/*.sops.yaml)
+      [ ! -f "$changed_file" ] || changed_secret_files+=("$changed_file")
+      ;;
+  esac
+done < <(
+  {
+    git diff --name-only --diff-filter=ACMRTUXB
+    git diff --cached --name-only --diff-filter=ACMRTUXB
+    git ls-files --others --exclude-standard secrets
+  } | sort -u
+)
+if [ "${#changed_secret_files[@]}" -gt 0 ]; then
+  ./scripts/validate-secret.sh "${changed_secret_files[@]}"
+fi
+
 git diff --check
 git diff --cached --check
 

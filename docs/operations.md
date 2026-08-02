@@ -17,7 +17,9 @@ mise run verify
 ```
 
 The verifier rejects partial configuration, recipient-policy drift, plaintext
-under `secrets/`, private-key material, and invalid SOPS payloads.
+under `secrets/`, private-key material, and invalid SOPS payloads. It decrypts
+and validates changed or newly added payloads before accepting a local change;
+a clean CI checkout does not need an age identity.
 
 ## Create
 
@@ -42,9 +44,26 @@ Edit an existing payload through SOPS:
 mise run secret-edit -- integrations/example
 ```
 
-The command resolves exactly one supported ciphertext file, invokes SOPS, and
-runs the repository guardrail. Secret values must enter through the editor or
-another process boundary, never command arguments, chat, logs, or commits.
+The command resolves exactly one supported ciphertext file, invokes SOPS,
+decrypts the result in memory for semantic validation, and then runs the
+repository guardrail. Secret values must enter through the editor or another
+process boundary, never command arguments, chat, logs, or commits.
+
+## Validate
+
+`secret-new` and `secret-edit` reject empty, non-string, and literal
+quote-wrapped values before reporting success. Validate every payload available
+to the active age identity with:
+
+```bash
+mise run secret-audit
+```
+
+For payload-specific contracts, add executable
+`scripts/validate-secret-policy.sh`. It receives the ciphertext path as its
+only argument and decrypted JSON on standard input. Validate exact keys and
+provider formats without printing values. Keep this hook repository-owned;
+generated vaults do not depend on future template releases.
 
 ## Consume
 
