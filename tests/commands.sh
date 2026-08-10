@@ -106,6 +106,20 @@ SOPS_AGE_KEY_FILE="$combined_keys" sops decrypt --output-type dotenv "$payload" 
   | grep -Fxq 'EXAMPLE_TOKEN=updated' \
   || fail "secret-edit did not update payload"
 SOPS_AGE_KEY_FILE="$combined_keys" mise run secret-audit >/dev/null
+SOPS_AGE_KEY_FILE="$combined_keys" \
+  ./scripts/validate-secret.sh "$test_root/$payload" >/dev/null
+
+outside_output="$test_root/outside-output.txt"
+if ./scripts/validate-secret.sh "$key_root/outside.sops.env" >"$outside_output" 2>&1; then
+  fail "validation accepted a path outside the vault"
+fi
+grep -Fq 'secret payload path is outside this vault' "$outside_output" \
+  || fail "outside-vault validation did not explain the path boundary"
+rm "$outside_output"
+
+if ./scripts/validate-secret.sh secrets/../outside.sops.env >/dev/null 2>&1; then
+  fail "validation accepted relative traversal outside the vault"
+fi
 
 printf 'EXAMPLE_TOKEN=plaintext\n' > secrets/integrations/plain.env
 if ./scripts/verify.sh >/dev/null 2>&1; then

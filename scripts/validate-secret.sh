@@ -10,10 +10,8 @@ vault_require_command jq
 vault_require_command sops
 
 for secret_file in "$@"; do
-  case "$secret_file" in
-    secrets/*.sops.env|secrets/*.sops.json|secrets/*.sops.yaml) ;;
-    *) vault_fail "unsupported secret payload path: $secret_file" ;;
-  esac
+  secret_file="$(vault_normalize_ciphertext_path "$repo_root" "$secret_file")"
+  [ ! -L "$secret_file" ] || vault_fail "secret payload must not be a symbolic link: $secret_file"
   [ -f "$secret_file" ] || vault_fail "secret payload not found: $secret_file"
 
   payload_json="$(sops decrypt --output-type json "$secret_file")" \

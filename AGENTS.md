@@ -15,8 +15,9 @@ instantiate in any organization.
   password-manager references, organization names, machine names, or account
   details to this template.
 - Keep secret values out of command arguments, logs, tests, docs, and fixtures.
-- Commands accept logical payload paths only. Do not add flags that accept
-  secret values.
+- Create and edit commands accept logical payload paths only. Validation may
+  canonicalize an absolute ciphertext path inside this repository. Do not add
+  flags that accept secret values.
 - Fail closed when configuration is incomplete, a payload path is ambiguous,
   or tracked material crosses the ciphertext boundary.
 - Keep generated vaults independent. This template is scaffolding, not a
