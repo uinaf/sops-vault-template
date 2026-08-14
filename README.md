@@ -1,3 +1,5 @@
+![sops-vault-template — reusable SOPS and age vault scaffold with fail-closed mise commands.](https://uinaf.dev/og/banner/sops-vault-template.png)
+
 # uinaf/sops-vault-template
 
 A small GitHub template for capability-scoped SOPS and age secret repositories.
