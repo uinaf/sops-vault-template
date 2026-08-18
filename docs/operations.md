@@ -63,11 +63,14 @@ Validation accepts logical ciphertext paths and absolute paths inside this
 repository, canonicalizing both to `secrets/...` before any repository policy
 lookup. Paths outside the vault are rejected before decryption.
 
-For payload-specific contracts, add executable
-`scripts/validate-secret-policy.sh`. It receives the ciphertext path as its
-only argument and decrypted JSON on standard input. Validate exact keys and
-provider formats without printing values. Keep this hook repository-owned;
-generated vaults do not depend on future template releases.
+For payload-specific contracts, add an executable
+`scripts/validate-secret-policy.sh`:
+
+- It receives the ciphertext path as its only argument and decrypted JSON on
+  standard input.
+- Validate exact keys and provider formats without printing values.
+- Keep this hook repository-owned; generated vaults do not depend on future
+  template releases.
 
 ## Consume
 
