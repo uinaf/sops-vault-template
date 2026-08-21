@@ -17,7 +17,7 @@ concurrency:
 jobs:
   verify:
     name: Template checks
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-2vcpu-ubuntu-2404
     timeout-minutes: 10
     env:
       SOPS_VERSION: 3.13.3
