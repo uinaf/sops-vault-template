@@ -54,7 +54,10 @@ mise run secret-audit
 Generated vaults can add an executable `scripts/validate-secret-policy.sh`
 hook for exact key inventories and provider-specific formats. The validator
 passes decrypted JSON through standard input and the ciphertext path as its
-only argument; it must never print values.
+only argument; it must never print values. `scripts/policy-engine.jq` backs
+that hook: the vault declares value formats and per-payload contracts as data,
+and its tests derive one valid fixture per contract from the format examples
+instead of restating key lists by hand.
 
 Commands accept logical paths below `secrets/`; they never accept secret values
 as arguments. [Vault operations](./docs/operations.md) covers payloads,
@@ -70,6 +73,8 @@ recipients, consumption, rotation, and recovery.
   initialized vault and rejects partial configuration.
 - `scripts/validate-secret.sh` provides the decrypting baseline and invokes an
   optional repository-owned semantic policy.
+- `scripts/policy-engine.jq` validates payloads against data-declared contracts
+  and derives test fixtures from format examples.
 - `.github/workflows/verify.yml` exercises the complete initialized-vault
   create, edit, audit, and negative-validation flow on every push and pull
   request without access to real secrets.

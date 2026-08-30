@@ -20,5 +20,6 @@ run = '''
 shellcheck scripts/*.sh tests/*.sh
 ./scripts/verify.sh
 ./tests/validation.sh
+./tests/policy-engine.sh
 ./tests/commands.sh
 '''

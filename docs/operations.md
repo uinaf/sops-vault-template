@@ -72,6 +72,23 @@ For payload-specific contracts, add an executable
 - Keep this hook repository-owned; generated vaults do not depend on future
   template releases.
 
+`scripts/policy-engine.jq` implements that hook as data. The vault declares a
+`formats` table (`name -> {pattern, description, example, multiline?}`) and a
+`contracts` table (`ciphertext path -> {keys, distinct?}`) in
+`scripts/validate-secret-policy.jq`, then runs:
+
+```bash
+jq -r -L scripts --arg secret_file "$secret_file" \
+  'include "validate-secret-policy"; include "policy-engine";
+   validate(contracts; formats; $secret_file)'
+```
+
+The engine enforces the exact key inventory, per-format patterns, single-line
+hygiene, and distinct-value groups. `contract_fixtures` derives one valid
+payload per contract from the format examples, so a vault's policy test
+validates every registered contract without hand-maintained fixtures: changing
+a contract is a one-file data edit.
+
 ## Consume
 
 Prefer a process boundary so plaintext exists only in the consumer process:
