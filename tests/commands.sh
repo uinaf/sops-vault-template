@@ -16,7 +16,79 @@ done
 
 test_root="$(mktemp -d "${TMPDIR:-/tmp}/sops-vault-template-test.XXXXXX")"
 key_root="$(mktemp -d "${TMPDIR:-/tmp}/sops-vault-template-keys.XXXXXX")"
-trap 'rm -rf "$test_root" "$key_root"' EXIT
+boundary_root="$(mktemp -d "${TMPDIR:-/tmp}/sops-vault-template-boundary.XXXXXX")"
+trap 'rm -rf "$test_root" "$key_root" "$boundary_root"' EXIT
+
+# These fixtures must fail before SOPS or directory creation, without keys.
+mkdir "$boundary_root/bin"
+cat > "$boundary_root/bin/sops" <<'EOF'
+#!/usr/bin/env bash
+touch "$SOPS_VAULT_TEST_CALLED"
+exit 9
+EOF
+chmod +x "$boundary_root/bin/sops"
+for operation in new edit; do
+  for boundary in parent missing-parent dangling-parent leaf dangling-leaf secrets-root alias; do
+    fixture="$boundary_root/$operation-$boundary"
+    mkdir -p "$fixture/repo/secrets/nested" "$fixture/outside"
+    cp -R scripts "$fixture/repo/"
+    printf 'creation_rules: []\n' > "$fixture/repo/.sops.yaml"
+    (
+      cd "$fixture/repo"
+      git init -q -b main
+      logical_path=nested/example
+      if [ "$boundary" = missing-parent ]; then
+        logical_path=nested/missing/example
+        mkdir secrets/nested/missing
+      fi
+      payload="secrets/$logical_path.sops.env"
+      touch "$payload"
+      git add "$payload"
+      rm -rf secrets
+      mkdir -p secrets/nested
+      case "$boundary" in
+        parent|missing-parent)
+          rmdir secrets/nested
+          ln -s "$fixture/outside" secrets/nested
+          if [ "$operation" = edit ]; then
+            touch "$fixture/outside/example.sops.env"
+          fi
+          ;;
+        dangling-parent)
+          rmdir secrets/nested
+          ln -s "$fixture/outside/missing" secrets/nested
+          ;;
+        leaf|dangling-leaf)
+          if [ "$boundary" = leaf ]; then
+            touch "$fixture/outside/example.sops.env"
+          fi
+          ln -s "$fixture/outside/example.sops.env" "$payload"
+          ;;
+        alias)
+          rmdir secrets/nested
+          mkdir secrets/development
+          ln -s development secrets/nested
+          if [ "$operation" = edit ]; then
+            touch secrets/development/example.sops.env
+          fi
+          ;;
+        secrets-root)
+          rm -rf secrets
+          ln -s "$fixture/outside" secrets
+          ;;
+      esac
+      if PATH="$boundary_root/bin:$PATH" \
+        SOPS_VAULT_TEST_CALLED="$fixture/called" \
+        "./scripts/secret-$operation.sh" "$logical_path" >"$fixture/output" 2>&1; then
+        fail "secret-$operation accepted $boundary"
+      fi
+      [ ! -e "$fixture/called" ] || fail "secret-$operation invoked SOPS for $boundary"
+      [ ! -e "$fixture/outside/missing" ] || fail "secret-$operation created an outside directory"
+      grep -Eq 'outside this vault|must not be a symbolic link|parent is not a directory' "$fixture/output" \
+        || fail "secret-$operation did not explain $boundary rejection"
+    )
+  done
+done
 
 cp -R AGENTS.md CLAUDE.md README.md LICENSE mise.toml recipients.yaml \
   .sops.yaml.example scripts docs tests "$test_root/"
@@ -108,6 +180,11 @@ SOPS_AGE_KEY_FILE="$combined_keys" sops decrypt --output-type dotenv "$payload" 
 SOPS_AGE_KEY_FILE="$combined_keys" mise run secret-audit >/dev/null
 SOPS_AGE_KEY_FILE="$combined_keys" \
   ./scripts/validate-secret.sh "$test_root/$payload" >/dev/null
+
+ln -s integrations secrets/alias
+SOPS_AGE_KEY_FILE="$combined_keys" \
+  ./scripts/validate-secret.sh "$test_root/secrets/alias/example.sops.env" >/dev/null
+rm secrets/alias
 
 outside_output="$test_root/outside-output.txt"
 if ./scripts/validate-secret.sh "$key_root/outside.sops.env" >"$outside_output" 2>&1; then

@@ -39,11 +39,13 @@ vault_require_command sops
 
 for candidate_format in env json yaml; do
   candidate="secrets/${secret_ref}.sops.${candidate_format}"
+  vault_normalize_ciphertext_path "$repo_root" "$candidate" >/dev/null
   [ ! -e "$candidate" ] || vault_fail "secret payload already exists: $candidate"
 done
 
 target="secrets/${secret_ref}.sops.${format}"
 mkdir -p "$(dirname "$target")"
+vault_normalize_ciphertext_path "$repo_root" "$target" >/dev/null
 sops "$target"
 
 status="$(sops filestatus "$target" 2>/dev/null)" \
