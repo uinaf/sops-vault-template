@@ -30,7 +30,8 @@ mise run secret-new -- integrations/example
 ```
 
 Use `--format json` or `--format yaml` when required. The command validates the
-logical path, refuses existing or ambiguous payloads, invokes SOPS directly,
+logical path and physical containment before creating directories, refuses
+existing or ambiguous payloads and symlink leaves, invokes SOPS directly,
 and runs the repository guardrail after saving.
 
 Keep unrelated consumers in separate payloads even when they currently use the
@@ -44,7 +45,8 @@ Edit an existing payload through SOPS:
 mise run secret-edit -- integrations/example
 ```
 
-The command resolves exactly one supported ciphertext file, invokes SOPS,
+The command resolves exactly one supported ciphertext file, checks physical
+containment and rejects symlink leaves before invoking SOPS,
 decrypts the result in memory for semantic validation, and then runs the
 repository guardrail. Secret values must enter through the editor or another
 process boundary, never command arguments, chat, logs, or commits.

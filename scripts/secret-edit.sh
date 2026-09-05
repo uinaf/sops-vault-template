@@ -13,6 +13,7 @@ vault_require_command sops
 matches=()
 for format in env json yaml; do
   candidate="secrets/${secret_ref}.sops.${format}"
+  vault_normalize_ciphertext_path "$repo_root" "$candidate" >/dev/null
   [ ! -f "$candidate" ] || matches+=("$candidate")
 done
 
