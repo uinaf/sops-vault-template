@@ -28,7 +28,7 @@ exit 9
 EOF
 chmod +x "$boundary_root/bin/sops"
 for operation in new edit; do
-  for boundary in parent missing-parent dangling-parent leaf dangling-leaf secrets-root; do
+  for boundary in parent missing-parent dangling-parent leaf dangling-leaf secrets-root alias; do
     fixture="$boundary_root/$operation-$boundary"
     mkdir -p "$fixture/repo/secrets/nested" "$fixture/outside"
     cp -R scripts "$fixture/repo/"
@@ -63,6 +63,14 @@ for operation in new edit; do
             touch "$fixture/outside/example.sops.env"
           fi
           ln -s "$fixture/outside/example.sops.env" "$payload"
+          ;;
+        alias)
+          rmdir secrets/nested
+          mkdir secrets/development
+          ln -s development secrets/nested
+          if [ "$operation" = edit ]; then
+            touch secrets/development/example.sops.env
+          fi
           ;;
         secrets-root)
           rm -rf secrets
@@ -172,6 +180,11 @@ SOPS_AGE_KEY_FILE="$combined_keys" sops decrypt --output-type dotenv "$payload" 
 SOPS_AGE_KEY_FILE="$combined_keys" mise run secret-audit >/dev/null
 SOPS_AGE_KEY_FILE="$combined_keys" \
   ./scripts/validate-secret.sh "$test_root/$payload" >/dev/null
+
+ln -s integrations secrets/alias
+SOPS_AGE_KEY_FILE="$combined_keys" \
+  ./scripts/validate-secret.sh "$test_root/secrets/alias/example.sops.env" >/dev/null
+rm secrets/alias
 
 outside_output="$test_root/outside-output.txt"
 if ./scripts/validate-secret.sh "$key_root/outside.sops.env" >"$outside_output" 2>&1; then

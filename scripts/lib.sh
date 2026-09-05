@@ -46,7 +46,8 @@ vault_normalize_ciphertext_path() {
       remaining=${remaining#*/}
     fi
     parent_path="$parent_path/$component"
-    if [ -e "$parent_path" ] || [ -L "$parent_path" ]; then
+    [ ! -L "$parent_path" ] || vault_fail "secret payload parent must not be a symbolic link: $secret_file"
+    if [ -e "$parent_path" ]; then
       [ -d "$parent_path" ] || vault_fail "secret payload parent is not a directory: $secret_file"
       parent_path="$(cd "$parent_path" && pwd -P)"
       case "$parent_path" in
