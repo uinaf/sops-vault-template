@@ -106,6 +106,10 @@ renderer owns permissions and cleanup.
 
 ## Add a Recipient
 
+Use the portable [identity-item and recovery convention](https://github.com/uinaf/dotfiles/blob/main/docs/identities.md#1password-item-convention)
+for deployment backups and independent human recovery. Keep concrete recovery
+item references outside the vault.
+
 1. Generate a dedicated age identity outside the repository with owner-only
    permissions.
 2. Back up the private identity in the approved recovery system.
