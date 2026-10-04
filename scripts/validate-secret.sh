@@ -16,10 +16,11 @@ for secret_file in "$@"; do
 
   payload_json="$(sops decrypt --output-type json "$secret_file")" \
     || vault_fail "could not decrypt $secret_file"
-  leaf_count="$(jq '[paths(scalars)] | length' <<<"$payload_json")"
+  # Bash backs a here-string with a temporary file, so pipe the plaintext.
+  leaf_count="$(printf '%s\n' "$payload_json" | jq '[paths(scalars)] | length')"
   [ "$leaf_count" -gt 0 ] || vault_fail "$secret_file contains no secret values"
 
-  errors="$(jq -r -f scripts/validate-secret.jq <<<"$payload_json")"
+  errors="$(printf '%s\n' "$payload_json" | jq -r -f scripts/validate-secret.jq)"
   [ -z "$errors" ] || vault_fail "$secret_file failed baseline validation: $errors"
 
   if [ -x scripts/validate-secret-policy.sh ]; then
