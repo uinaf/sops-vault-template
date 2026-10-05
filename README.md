@@ -75,9 +75,9 @@ recipients, consumption, rotation, and recovery.
   optional repository-owned semantic policy.
 - `scripts/policy-engine.jq` validates payloads against data-declared contracts
   and derives test fixtures from format examples.
-- `.github/workflows/verify.yml` exercises the complete initialized-vault
-  create, edit, audit, and negative-validation flow on every push and pull
-  request without access to real secrets.
+- [`verify.yml`](.github/workflows/verify.yml) exercises the complete
+  initialized-vault create, edit, audit, and negative-validation flow without
+  access to real secrets.
 - `CLAUDE.md` points to the canonical `AGENTS.md` guidance.
 
 ## License
