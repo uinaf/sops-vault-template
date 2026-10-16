@@ -51,13 +51,9 @@ active age identity can decrypt with:
 mise run secret-audit
 ```
 
-Generated vaults can add an executable `scripts/validate-secret-policy.sh`
-hook for exact key inventories and provider-specific formats. The validator
-passes decrypted JSON through standard input and the ciphertext path as its
-only argument; it must never print values. `scripts/policy-engine.jq` backs
-that hook: the vault declares value formats and per-payload contracts as data,
-and its tests derive one valid fixture per contract from the format examples
-instead of restating key lists by hand.
+Generated vaults can add exact key and provider-format contracts through
+`scripts/validate-secret-policy.sh`; see
+[Validate](./docs/operations.md#validate).
 
 Commands accept logical paths below `secrets/`; they never accept secret values
 as arguments. [Vault operations](./docs/operations.md) covers payloads,
