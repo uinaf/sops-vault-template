@@ -18,8 +18,8 @@ adding secrets:
 3. Replace the example placeholders with those public recipients.
 4. Run `mise run verify`.
 
-Private age identities belong in an approved recovery system and owner-only on
-their deployments. Only public recipients belong in the repository.
+Private age identities live in an approved recovery system and owner-only on
+their deployments; the repository holds only public recipients.
 
 ## Use the Vault
 
@@ -55,8 +55,8 @@ Generated vaults can add exact key and provider-format contracts through
 `scripts/validate-secret-policy.sh`; see
 [Validate](./docs/operations.md#validate).
 
-Commands accept logical paths below `secrets/`; they never accept secret values
-as arguments. [Vault operations](./docs/operations.md) covers payloads,
+Commands take logical paths below `secrets/`, not secret values.
+[Vault operations](./docs/operations.md) covers payloads,
 recipients, consumption, rotation, and recovery.
 
 ## Template Contract

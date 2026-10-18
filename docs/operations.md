@@ -48,8 +48,8 @@ mise run secret-edit -- integrations/example
 The command resolves exactly one supported ciphertext file and checks physical
 containment, rejecting symlinked ancestors or leaves before invoking SOPS. After
 editing, it decrypts the result in memory for semantic validation and runs the
-repository guardrail. Secret values must enter through the editor or another
-process boundary, never command arguments, chat, logs, or commits.
+repository guardrail. Secret values enter through the editor or another
+process boundary, not command arguments, chat, logs, or commits.
 
 ## Validate
 
@@ -106,9 +106,7 @@ renderer owns permissions and cleanup.
 
 ## Add a Recipient
 
-Use the portable [identity-item and recovery convention](https://github.com/altaywtf/dotfiles/blob/main/docs/identities.md#1password-item-convention)
-for deployment backups and independent human recovery. Keep concrete recovery
-item references outside the vault.
+Keep concrete recovery item references outside the vault.
 
 1. Generate a dedicated age identity outside the repository with owner-only
    permissions.

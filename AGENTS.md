@@ -11,16 +11,16 @@ instantiate in any organization.
 
 ## Boundaries
 
-- Never add real recipients, ciphertext, credentials, private identities,
-  password-manager references, organization names, machine names, or account
-  details to this template.
-- Keep secret values out of command arguments, logs, tests, docs, and fixtures.
-- Create and edit commands accept logical payload paths only. Validation may
-  canonicalize an absolute ciphertext path inside this repository. Do not add
-  flags that accept secret values.
+- Use placeholders for recipients, identities, organizations, machines,
+  accounts, and password-manager items. This template holds no ciphertext or
+  credentials.
+- Secret values enter through the editor or another process boundary; keep
+  them out of command arguments, logs, tests, docs, and fixtures.
+- Create and edit commands take logical payload paths. Validation may
+  canonicalize an absolute ciphertext path inside this repository.
 - Fail closed when configuration is incomplete, a payload path is ambiguous,
   or tracked material crosses the ciphertext boundary.
-- Keep generated vaults independent. This template is scaffolding, not a
+- Generated vaults own their copies. This template is scaffolding, not a
   runtime dependency or package.
 
 ## Change Workflow
@@ -30,4 +30,3 @@ instantiate in any organization.
 2. Add command behavior to `scripts/` and cover it in `tests/commands.sh`.
 3. Keep `README.md` task-oriented and put operational detail in
    `docs/operations.md`.
-4. Run `mise run verify`.
