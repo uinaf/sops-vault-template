@@ -18,9 +18,6 @@ jq -r -L scripts --arg secret_file "$secret_file" \
    validate(contracts; formats; $secret_file)'
 ```
 
-`contract_fixtures` derives one valid payload per contract, so a policy test
-needs no hand-written fixtures.
-
 ## Consume
 
 Keep plaintext inside the consumer process:
