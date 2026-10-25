@@ -1,32 +1,23 @@
 # Agent Guide
 
-This repository is a reusable SOPS vault template. Keep it generic and safe to
-instantiate in any organization.
-
-## Start
-
-- Read [Vault operations](./docs/operations.md) before changing commands or
-  policy.
-- Run `mise run verify` before committing.
+Reusable SOPS vault template. Keep it generic and safe to instantiate in any
+organization.
 
 ## Boundaries
 
 - Use placeholders for recipients, identities, organizations, machines,
-  accounts, and password-manager items. This template holds no ciphertext or
+  accounts, and password-manager items. The template holds no ciphertext or
   credentials.
-- Secret values enter through the editor or another process boundary; keep
-  them out of command arguments, logs, tests, docs, and fixtures.
-- Create and edit commands take logical payload paths. Validation may
-  canonicalize an absolute ciphertext path inside this repository.
+- Keep secret values out of command arguments, logs, tests, docs, and
+  fixtures.
 - Fail closed when configuration is incomplete, a payload path is ambiguous,
   or tracked material crosses the ciphertext boundary.
-- Generated vaults own their copies. This template is scaffolding, not a
-  runtime dependency or package.
+- Keep both states working: the untouched template and a fully initialized
+  vault. `scripts/verify.sh` rejects anything in between.
 
-## Change Workflow
+## Change workflow
 
-1. Preserve both supported states: an uninitialized template and an initialized
-   vault with configured recipients.
-2. Add command behavior to `scripts/` and cover it in `tests/commands.sh`.
-3. Keep `README.md` task-oriented and put operational detail in
-   `docs/operations.md`.
+1. Add command behavior to `scripts/` and cover it in `tests/commands.sh`.
+2. Run `mise run verify` before committing.
+3. Keep `README.md` to setup and daily commands; procedures go in
+   [Vault operations](./docs/operations.md).

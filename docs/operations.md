@@ -1,83 +1,16 @@
-# Vault Operations
+# Vault operations
 
-Generated vaults store SOPS ciphertext and public age recipients. Private age
-identities stay owner-only on approved deployments and in the vault owner's
-recovery system.
+## Payload contracts
 
-## Configure
+To enforce exact keys and provider formats, add an executable
+`scripts/validate-secret-policy.sh`. It receives the ciphertext path as its
+only argument and decrypted JSON on standard input, and must never print
+values.
 
-Add at least one recovery recipient and one deployment recipient to
-`recipients.yaml`. Copy `.sops.yaml.example` to `.sops.yaml`, replace its
-placeholders, and scope each creation rule to the payloads its consumers need.
-
-Run the guardrail before adding ciphertext:
-
-```bash
-mise run verify
-```
-
-The verifier rejects partial configuration, recipient-policy drift, plaintext
-under `secrets/`, private-key material, and invalid SOPS payloads. It decrypts
-and validates changed or newly added payloads before accepting a local change;
-a clean CI checkout does not need an age identity.
-
-## Create
-
-Create an environment payload by logical path:
-
-```bash
-mise run secret-new -- integrations/example
-```
-
-Use `--format json` or `--format yaml` when required. The command validates the
-logical path and physical containment before creating directories, refuses
-existing or ambiguous payloads and symlinked ancestors or leaves, invokes SOPS directly,
-and runs the repository guardrail after saving.
-
-Keep unrelated consumers in separate payloads even when they currently use the
-same provider credential.
-
-## Edit
-
-Edit an existing payload through SOPS:
-
-```bash
-mise run secret-edit -- integrations/example
-```
-
-The command resolves exactly one supported ciphertext file and checks physical
-containment, rejecting symlinked ancestors or leaves before invoking SOPS. After
-editing, it decrypts the result in memory for semantic validation and runs the
-repository guardrail. Secret values enter through the editor or another
-process boundary, not command arguments, chat, logs, or commits.
-
-## Validate
-
-`secret-new` and `secret-edit` reject empty, non-string, and literal
-quote-wrapped values before reporting success. Validate every payload available
-to the active age identity with:
-
-```bash
-mise run secret-audit
-```
-
-Validation accepts logical ciphertext paths and absolute paths inside this
-repository, canonicalizing both to `secrets/...` before any repository policy
-lookup. Paths outside the vault are rejected before decryption.
-
-For payload-specific contracts, add an executable
-`scripts/validate-secret-policy.sh`:
-
-- It receives the ciphertext path as its only argument and decrypted JSON on
-  standard input.
-- Validate exact keys and provider formats without printing values.
-- Keep this hook repository-owned; generated vaults do not depend on future
-  template releases.
-
-`scripts/policy-engine.jq` implements that hook as data. The vault declares a
-`formats` table (`name -> {pattern, description, example, multiline?}`) and a
-`contracts` table (`ciphertext path -> {keys, distinct?}`) in
-`scripts/validate-secret-policy.jq`, then runs:
+To declare contracts as data instead, define `formats` and `contracts` in
+`scripts/validate-secret-policy.jq` (schema in
+[`scripts/policy-engine.jq`](../scripts/policy-engine.jq)) and run the engine
+from the hook:
 
 ```bash
 jq -r -L scripts --arg secret_file "$secret_file" \
@@ -85,62 +18,48 @@ jq -r -L scripts --arg secret_file "$secret_file" \
    validate(contracts; formats; $secret_file)'
 ```
 
-The engine enforces the exact key inventory, per-format patterns, single-line
-hygiene, and distinct-value groups. `contract_fixtures` derives one valid
-payload per contract from the format examples, so a vault's policy test
-validates every registered contract without hand-maintained fixtures: changing
-a contract is a one-file data edit.
+`contract_fixtures` derives one valid payload per contract, so a policy test
+needs no hand-written fixtures.
 
 ## Consume
 
-Prefer a process boundary so plaintext exists only in the consumer process:
+Keep plaintext inside the consumer process:
 
 ```bash
 sops exec-env --same-process secrets/integrations/example.sops.env \
   './path/to/command'
 ```
 
-Use `sops exec-file` when a program requires a file path. A consumer-owned
-renderer may write an owner-only local file when its runtime requires one; that
-renderer owns permissions and cleanup.
+Use `sops exec-file` when a program needs a file path. A renderer that writes
+an owner-only file owns its permissions and cleanup.
 
-## Add a Recipient
+## Add a recipient
 
-Keep concrete recovery item references outside the vault.
+Keep recovery item references outside the vault.
 
-1. Generate a dedicated age identity outside the repository with owner-only
-   permissions.
-2. Back up the private identity in the approved recovery system.
-3. Add only its public recipient and stable deployment metadata to
-   `recipients.yaml`.
-4. Add it only to the matching `.sops.yaml` path rules.
-5. Run `sops updatekeys <payload>` for every affected payload.
-6. Verify decryption with the new identity and rejection with an unrelated
-   identity.
-7. Run `mise run verify`.
+1. Generate a dedicated age identity outside the repository, owner-only.
+2. Back up the private identity in your recovery system.
+3. Add only its public recipient and deployment metadata to
+   `recipients.yaml`, and add it to the matching `.sops.yaml` rules.
+4. Run `sops updatekeys <payload>` for every affected payload.
+5. Check that the new identity decrypts and an unrelated one does not.
+6. Run `mise run verify`.
 
-Repository access grants ciphertext access; SOPS recipients grant decryption.
-Both are required.
+## Remove a recipient
 
-## Remove a Recipient
-
-Remove the public recipient from the registry and affected SOPS rules, then
-update the affected payload keys. Rotate every underlying secret the recipient
-could decrypt because old Git revisions remain decryptable with the retired
-private identity.
+Remove it from `recipients.yaml` and the `.sops.yaml` rules, then run
+`sops updatekeys` on the affected payloads. Old Git revisions stay decryptable
+with the retired identity, so rotate every secret it could read.
 
 ## Recover
 
-Recovery is a human operation. Restore the backed-up age identity to an
-owner-only temporary or standard SOPS identity path, set mode `0600`, and point
-`SOPS_AGE_KEY_FILE` at it.
-
-Verify access without printing plaintext:
+Recovery is a human operation; unattended consumers use deployment identities.
+Restore the backed-up age identity to an owner-only path with mode `0600`,
+then check access without printing plaintext:
 
 ```bash
 SOPS_AGE_KEY_FILE=/owner-only/path/to/age-identity \
   sops decrypt --output /dev/null secrets/integrations/example.sops.env
 ```
 
-Remove temporary recovery material after the operation. Unattended consumers
-use deployment identities instead of recovery identities.
+Remove temporary recovery material afterwards.
