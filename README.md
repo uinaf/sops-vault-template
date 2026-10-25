@@ -29,7 +29,7 @@ Commands take logical paths below `secrets/`; values enter through the editor.
 mise run secret-new -- integrations/example                # dotenv
 mise run secret-new -- --format json identities/operator   # or yaml
 mise run secret-edit -- integrations/example
-mise run secret-audit   # every payload the active age identity can decrypt
+mise run secret-audit   # decrypt and validate every payload
 mise run verify
 ```
 
