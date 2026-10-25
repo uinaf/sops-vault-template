@@ -2,79 +2,42 @@
 
 # uinaf/sops-vault-template
 
-A small GitHub template for capability-scoped SOPS and age secret repositories.
-Generated vaults own their copied policy, scripts, and documentation; this repo
-is not a package or runtime dependency.
+GitHub template for capability-scoped SOPS and age secret repositories.
+Each generated vault owns its copy of the scripts and docs; nothing pulls
+updates from this repository.
 
-## Create a Vault
+## Create a vault
 
-Create a repository from [this template](https://github.com/new?template_name=sops-vault-template&template_owner=uinaf), then clone it.
+Create a repository from
+[this template](https://github.com/new?template_name=sops-vault-template&template_owner=uinaf),
+clone it, and install `mise`, `sops`, `age`, `jq`, and `shellcheck`. Then:
 
-Install `mise`, `sops`, `age`, `jq`, and `shellcheck`. Configure the vault before
-adding secrets:
+1. Add at least one recovery and one deployment public recipient to
+   `recipients.yaml`.
+2. Copy `.sops.yaml.example` to `.sops.yaml`, replace its placeholders with
+   those recipients, and scope each rule to the payloads its consumers need.
+3. Run `mise run verify`.
 
-1. Add the public recovery and deployment recipients to `recipients.yaml`.
-2. Copy `.sops.yaml.example` to `.sops.yaml`.
-3. Replace the example placeholders with those public recipients.
-4. Run `mise run verify`.
+Private age identities never enter the repository: back them up in your
+recovery system and keep runtime copies owner-only on their deployments.
 
-Private age identities live in an approved recovery system and owner-only on
-their deployments; the repository holds only public recipients.
+## Use the vault
 
-## Use the Vault
-
-Create an environment payload:
-
-```bash
-mise run secret-new -- integrations/example
-```
-
-Choose JSON or YAML when the consumer requires it:
+Commands take logical paths below `secrets/`; values enter through the editor.
 
 ```bash
-mise run secret-new -- --format json identities/operator
-mise run secret-new -- --format yaml deploy/service
-```
-
-Edit an existing payload and run the full guardrail:
-
-```bash
+mise run secret-new -- integrations/example                # dotenv
+mise run secret-new -- --format json identities/operator   # or yaml
 mise run secret-edit -- integrations/example
+mise run secret-audit   # every payload the active age identity can decrypt
 mise run verify
 ```
 
-`secret-new` and `secret-edit` decrypt the changed payload in memory and reject
-empty, non-string, or literal quote-wrapped values. Audit every payload that the
-active age identity can decrypt with:
+Keep unrelated consumers in separate payloads, even when they share a provider
+credential today.
 
-```bash
-mise run secret-audit
-```
-
-Generated vaults can add exact key and provider-format contracts through
-`scripts/validate-secret-policy.sh`; see
-[Validate](./docs/operations.md#validate).
-
-Commands take logical paths below `secrets/`, not secret values.
-[Vault operations](./docs/operations.md) covers payloads,
-recipients, consumption, rotation, and recovery.
-
-## Template Contract
-
-- `recipients.yaml` is the public recipient registry.
-- `.sops.yaml` is the initialized path-to-recipient policy.
-- `secrets/` contains only `.sops.env`, `.sops.json`, or `.sops.yaml`
-  ciphertext.
-- `scripts/verify.sh` accepts the untouched template state or a completely
-  initialized vault and rejects partial configuration.
-- `scripts/validate-secret.sh` provides the decrypting baseline and invokes an
-  optional repository-owned semantic policy.
-- `scripts/policy-engine.jq` validates payloads against data-declared contracts
-  and derives test fixtures from format examples.
-- [`verify.yml`](.github/workflows/verify.yml) exercises the complete
-  initialized-vault create, edit, audit, and negative-validation flow without
-  access to real secrets.
-- `CLAUDE.md` points to the canonical `AGENTS.md` guidance.
+[Vault operations](./docs/operations.md) covers payload contracts,
+consumption, recipients, and recovery.
 
 ## License
 
